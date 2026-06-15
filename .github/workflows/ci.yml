@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Preprocessing tests (torch-free, py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # preprocessing.py + its tests are pure cv2/numpy — no torch needed, so
+      # this job stays fast (seconds, no ~200 MB torch download).
+      - name: Install lightweight deps
+        run: python -m pip install --upgrade pip opencv-python-headless numpy pyyaml pytest
+
+      - name: Run unit tests
+        run: python -m pytest tests/ -v
+
+  smoke-test:
+    name: End-to-end pipeline smoke test (CPU)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # CPU-only torch index keeps the install small/fast (no CUDA payload).
+      - name: Install CPU torch + pipeline deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install timm scikit-learn pandas pyyaml opencv-python-headless numpy
+
+      # Exercises the full loop (forward/loss/backward/val/QWK/checkpoint) on
+      # synthetic data with a tiny resnet18 (pretrained=False -> no downloads).
+      - name: Run training smoke test
+        run: python -m src.train --smoke-test

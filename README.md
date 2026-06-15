@@ -1,5 +1,7 @@
 # Blindness Eradication — Diabetic Retinopathy Detection
 
+[![CI](https://github.com/johnpitteera/blindness-eradication/actions/workflows/ci.yml/badge.svg)](https://github.com/johnpitteera/blindness-eradication/actions/workflows/ci.yml)
+
 Deep-learning pipeline that grades **diabetic retinopathy (DR)** from fundus
 (retina) photographs on the 5-class international clinical scale:
 
