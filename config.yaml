@@ -1,0 +1,59 @@
+# All paths and hyperparameters for the DR pipeline live here.
+# Override any of these from the command line if a script supports it.
+
+project:
+  name: blindness-eradication-dr
+  seed: 42
+  num_classes: 5
+
+paths:
+  # Directory containing the fundus images (.png/.jpg).
+  images_dir: data/aptos2019/train_images
+  # CSV with columns: id_code,diagnosis  (APTOS format)
+  labels_csv: data/aptos2019/train.csv
+  # Where checkpoints, logs, and metrics are written.
+  output_dir: outputs
+
+preprocessing:
+  image_size: 512          # square side length after crop+resize
+  ben_graham: true         # subtract local-average blur to amplify lesions
+  ben_graham_sigma_scale: 10   # Gaussian sigma = image_size / this
+  crop_tol: 7              # threshold for cropping the black border off the retina
+
+data:
+  val_split: 0.15          # fraction of training data held out for validation
+  # APTOS-style filename pattern: <id_code><ext> inside images_dir
+  image_ext: .png
+  num_workers: 2           # set to 2 on Colab; 0 on Windows local if issues
+
+augmentation:
+  horizontal_flip: 0.5
+  vertical_flip: 0.5
+  rotate_limit: 360        # retina has no canonical orientation
+  brightness_contrast: 0.2
+
+model:
+  backbone: efficientnet_b3   # any timm model name
+  pretrained: true
+  dropout: 0.3
+  # 'classification' = softmax over 5 classes (v1 default)
+  # 'ordinal'        = scaffolded alternative (see model.py)
+  head: classification
+
+training:
+  epochs: 20
+  batch_size: 16           # lower to 8 if Colab OOMs at 512px
+  lr: 0.0003
+  warmup_epochs: 2         # linear LR warmup before cosine decay (0 = disabled)
+  weight_decay: 0.00001
+  # Counter class imbalance: 'weighted_ce' uses inverse-frequency weights.
+  loss: weighted_ce
+  mixed_precision: true    # AMP on GPU; auto-disabled on CPU
+  early_stop_patience: 5   # epochs without val-QWK improvement before stopping
+
+smoke_test:
+  # Used by `--smoke-test`: tiny synthetic run to prove the pipeline works.
+  num_samples: 32
+  epochs: 1
+  image_size: 64
+  batch_size: 4

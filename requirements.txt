@@ -1,0 +1,32 @@
+# Local development dependencies (CPU). Python 3.11–3.14 supported.
+#
+# NOTE FOR COLAB: do NOT `pip install -r requirements.txt` on Colab.
+# Colab ships a CUDA build of torch/torchvision — reinstalling here would
+# replace it with a CPU wheel and you'd lose the GPU. On Colab install only
+# the extras (timm, albumentations, pyyaml, grad-cam). See the notebook.
+
+# --- core (torch has a cp314 wheel; this is a CPU build locally) ---
+torch>=2.4
+torchvision>=0.19
+
+# --- modeling / metrics ---
+timm>=1.0.7
+scikit-learn>=1.4
+
+# --- image preprocessing (pure cv2/numpy path, no torch) ---
+opencv-python-headless>=4.9
+numpy>=1.26
+pillow>=10.0
+
+# --- data + augmentation ---
+pandas>=2.0
+albumentations>=1.4
+
+# --- explainability ---
+grad-cam>=1.5
+
+# --- config + viz + testing ---
+pyyaml>=6.0
+matplotlib>=3.8
+tqdm>=4.66
+pytest>=8.0
